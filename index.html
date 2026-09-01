@@ -1,0 +1,859 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>班级通讯录收集</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #172026;
+      --muted: #64717a;
+      --line: #d9e1e5;
+      --paper: #f7f5ef;
+      --panel: #ffffff;
+      --teal: #0f766e;
+      --teal-dark: #0b5f59;
+      --coral: #d95b43;
+      --gold: #c49328;
+      --blue: #315d8c;
+      --shadow: 0 14px 36px rgba(23, 32, 38, 0.12);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      letter-spacing: 0;
+    }
+
+    button,
+    input,
+    textarea,
+    select {
+      font: inherit;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+    }
+
+    header {
+      background: linear-gradient(135deg, #f7f5ef 0%, #eef7f5 52%, #fff7f0 100%);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .header-inner {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0 22px;
+      display: grid;
+      gap: 16px;
+      grid-template-columns: 1fr auto;
+      align-items: end;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .mark {
+      width: 48px;
+      height: 48px;
+      border-radius: 8px;
+      background:
+        linear-gradient(90deg, transparent 11px, rgba(255,255,255,.42) 12px, transparent 13px),
+        linear-gradient(0deg, transparent 11px, rgba(255,255,255,.42) 12px, transparent 13px),
+        linear-gradient(135deg, var(--teal), var(--blue));
+      box-shadow: var(--shadow);
+      flex: 0 0 auto;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(24px, 4vw, 38px);
+      line-height: 1.15;
+      font-weight: 800;
+    }
+
+    .subtitle {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    .status-strip {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.78);
+      min-height: 34px;
+      border-radius: 999px;
+      padding: 7px 12px;
+      color: var(--muted);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    nav {
+      background: #ffffff;
+      border-bottom: 1px solid var(--line);
+      position: sticky;
+      top: 0;
+      z-index: 5;
+    }
+
+    .tabs {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      padding: 10px 0;
+    }
+
+    .tab {
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--muted);
+      min-height: 42px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .tab.active {
+      background: #e8f4f2;
+      border-color: #b9dad6;
+      color: var(--teal-dark);
+    }
+
+    main {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 24px 0 40px;
+    }
+
+    .view {
+      display: none;
+    }
+
+    .view.active {
+      display: block;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-head {
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.35;
+    }
+
+    .helper {
+      margin: 6px 0 0;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 14px;
+    }
+
+    form {
+      padding: 20px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    label {
+      display: grid;
+      gap: 7px;
+      color: #314049;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .full {
+      grid-column: 1 / -1;
+    }
+
+    input,
+    textarea,
+    select {
+      width: 100%;
+      border: 1px solid #cbd6dc;
+      background: #fbfcfc;
+      min-height: 44px;
+      border-radius: 8px;
+      padding: 10px 12px;
+      color: var(--ink);
+      outline: none;
+    }
+
+    textarea {
+      min-height: 86px;
+      resize: vertical;
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus {
+      border-color: var(--teal);
+      box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.14);
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-top: 18px;
+    }
+
+    .btn {
+      border: 1px solid transparent;
+      min-height: 42px;
+      border-radius: 8px;
+      padding: 9px 14px;
+      cursor: pointer;
+      font-weight: 800;
+      color: #ffffff;
+      background: var(--teal);
+    }
+
+    .btn:hover {
+      background: var(--teal-dark);
+    }
+
+    .btn.secondary {
+      background: #ffffff;
+      color: var(--ink);
+      border-color: var(--line);
+    }
+
+    .btn.warning {
+      background: var(--coral);
+    }
+
+    .btn.gold {
+      background: var(--gold);
+    }
+
+    .notice {
+      margin-top: 14px;
+      color: var(--teal-dark);
+      font-weight: 700;
+      min-height: 22px;
+    }
+
+    .consent {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      font-weight: 600;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .consent input {
+      width: 18px;
+      height: 18px;
+      min-height: 18px;
+      margin-top: 2px;
+      flex: 0 0 auto;
+    }
+
+    .toolbar {
+      padding: 16px 20px;
+      display: grid;
+      grid-template-columns: 1fr 180px auto auto;
+      gap: 10px;
+      align-items: center;
+      border-bottom: 1px solid var(--line);
+      background: #fbfcfc;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 980px;
+      font-size: 14px;
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid var(--line);
+      padding: 11px 12px;
+      text-align: left;
+      vertical-align: top;
+      line-height: 1.45;
+    }
+
+    th {
+      background: #f2f6f7;
+      color: #304049;
+      white-space: nowrap;
+    }
+
+    tr:hover td {
+      background: #fffaf4;
+    }
+
+    .empty {
+      padding: 30px 20px;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    .admin-lock {
+      padding: 20px;
+      display: grid;
+      gap: 12px;
+      max-width: 460px;
+    }
+
+    .settings {
+      padding: 20px;
+      display: grid;
+      gap: 16px;
+      max-width: 680px;
+    }
+
+    .danger-zone {
+      border-top: 1px solid var(--line);
+      padding-top: 16px;
+    }
+
+    @media (max-width: 760px) {
+      .header-inner {
+        grid-template-columns: 1fr;
+        align-items: start;
+      }
+
+      .status-strip {
+        justify-content: flex-start;
+      }
+
+      main,
+      .tabs,
+      .header-inner {
+        width: min(100% - 24px, 1120px);
+      }
+
+      .tabs {
+        grid-template-columns: 1fr;
+      }
+
+      .grid,
+      .toolbar {
+        grid-template-columns: 1fr;
+      }
+
+      .panel-head {
+        padding: 16px;
+      }
+
+      form,
+      .settings,
+      .admin-lock,
+      .toolbar {
+        padding: 16px;
+      }
+
+      .btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="header-inner">
+        <div class="brand">
+          <div class="mark" aria-hidden="true"></div>
+          <div>
+            <h1 id="pageTitle">良光中学初三111班通讯录</h1>
+          </div>
+        </div>
+        <div class="status-strip">
+          <span class="pill" id="countPill">已收集 0 人</span>
+          <span class="pill">班级内部使用</span>
+        </div>
+      </div>
+    </header>
+
+    <nav aria-label="页面切换">
+      <div class="tabs">
+        <button class="tab active" data-view="submitView" type="button">填写信息</button>
+        <button class="tab" data-view="directoryView" type="button">查看通讯录</button>
+        <button class="tab" data-view="settingsView" type="button">设置</button>
+      </div>
+    </nav>
+
+    <main>
+      <section class="view active" id="submitView">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>同学信息登记</h2>
+              <p class="helper">手机号按完整号码保存。暂时不确定的信息可以先空着，以后再补。</p>
+            </div>
+          </div>
+          <form id="studentForm">
+            <input type="hidden" id="recordId">
+            <div class="grid">
+              <label>
+                姓名 *
+                <input id="name" autocomplete="name" required placeholder="例如：张三">
+              </label>
+              <label>
+                手机号码 *
+                <input id="phone" inputmode="tel" autocomplete="tel" required placeholder="例如：13800138000">
+              </label>
+              <label>
+                QQ号
+                <input id="qq" inputmode="numeric" placeholder="例如：123456789">
+              </label>
+              <label>
+                微信号
+                <input id="wechat" placeholder="例如：wxid 或手机号">
+              </label>
+              <label>
+                学校
+                <input id="school" placeholder="例如：广东石油化工学院">
+              </label>
+              <label>
+                工作单位
+                <input id="company" placeholder="例如：某某公司">
+              </label>
+              <label>
+                所在城市
+                <input id="city" placeholder="例如：广州、深圳、佛山">
+              </label>
+              <label class="full">
+                家乡 / 地址
+                <input id="address" placeholder="例如：良光镇某村，或目前常住地">
+              </label>
+              <label class="full">
+                备注
+                <textarea id="notes" placeholder="例如：方便联系的时间、是否愿意加入同学群等"></textarea>
+              </label>
+              <label class="full consent">
+                <input id="consent" type="checkbox" required>
+                <span>我同意将以上信息用于本班毕业同学通讯录整理，并仅在班级内部使用。</span>
+              </label>
+            </div>
+            <div class="actions">
+              <button class="btn" type="submit">保存信息</button>
+              <button class="btn secondary" id="resetForm" type="button">清空表单</button>
+            </div>
+            <div class="notice" id="formNotice" role="status"></div>
+          </form>
+        </div>
+      </section>
+
+      <section class="view" id="directoryView">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>管理员通讯录</h2>
+              <p class="helper">通过管理密码后可查看完整号码，并导出 CSV 表格。</p>
+            </div>
+          </div>
+
+          <div id="lockBox" class="admin-lock">
+            <label>
+              管理密码
+              <input id="adminPasswordInput" type="password" placeholder="默认：111111">
+            </label>
+            <button class="btn" id="unlockBtn" type="button">进入通讯录</button>
+            <div class="helper">本机演示版的密码只用于避免误点查看，不等同于正式网站安全权限。</div>
+          </div>
+
+          <div id="directoryBox" hidden>
+            <div class="toolbar">
+              <input id="searchInput" placeholder="搜索姓名、手机、城市、学校、单位">
+              <select id="cityFilter" aria-label="按城市筛选">
+                <option value="">全部城市</option>
+              </select>
+              <button class="btn gold" id="exportBtn" type="button">导出 CSV</button>
+              <button class="btn secondary" id="lockBtn" type="button">锁定</button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>序号</th>
+                    <th>姓名</th>
+                    <th>手机号码</th>
+                    <th>QQ号</th>
+                    <th>微信号</th>
+                    <th>学校</th>
+                    <th>工作单位</th>
+                    <th>所在城市</th>
+                    <th>家乡 / 地址</th>
+                    <th>备注</th>
+                    <th>更新时间</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody id="directoryBody"></tbody>
+              </table>
+            </div>
+            <div class="empty" id="emptyState" hidden>还没有符合条件的同学信息。</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="settingsView">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>页面设置</h2>
+              <p class="helper">用于班委先调好班级名称和管理密码。</p>
+            </div>
+          </div>
+          <div class="settings">
+            <label>
+              通讯录标题
+              <input id="titleSetting">
+            </label>
+            <label>
+              管理密码
+              <input id="passwordSetting" type="password">
+            </label>
+            <div class="actions">
+              <button class="btn" id="saveSettings" type="button">保存设置</button>
+            </div>
+            <div class="danger-zone">
+              <h2>数据管理</h2>
+              <p class="helper">导出后可以用 Excel 打开。清空数据前请先确认已经备份。</p>
+              <div class="actions">
+                <button class="btn gold" id="exportBtn2" type="button">导出 CSV</button>
+                <button class="btn warning" id="clearAll" type="button">清空全部数据</button>
+              </div>
+            </div>
+            <div class="notice" id="settingsNotice" role="status"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const defaultSettings = {
+      title: "良光中学初三111班通讯录"
+    };
+
+    const fields = ["name", "phone", "qq", "wechat", "school", "company", "city", "address", "notes"];
+    let records = [];
+    let settings = { ...defaultSettings };
+    let adminPassword = "";
+    let unlocked = false;
+
+    const pageTitle = document.querySelector("#pageTitle");
+    const countPill = document.querySelector("#countPill");
+    const form = document.querySelector("#studentForm");
+    const formNotice = document.querySelector("#formNotice");
+    const directoryBody = document.querySelector("#directoryBody");
+    const emptyState = document.querySelector("#emptyState");
+    const searchInput = document.querySelector("#searchInput");
+    const cityFilter = document.querySelector("#cityFilter");
+    const lockBox = document.querySelector("#lockBox");
+    const directoryBox = document.querySelector("#directoryBox");
+
+    function getValue(id) {
+      return document.querySelector(`#${id}`).value.trim();
+    }
+
+    function setValue(id, value) {
+      document.querySelector(`#${id}`).value = value || "";
+    }
+
+    const apiBase = "https://liangguangzhongxue111.netlify.app";
+
+    async function api(path, options = {}) {
+      const headers = {
+        "Content-Type": "application/json",
+        ...(options.headers || {})
+      };
+
+      if (adminPassword) headers["x-admin-password"] = adminPassword;
+
+      const response = await fetch(`${apiBase}${path}`, {
+        ...options,
+        headers
+      });
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data.error || "请求失败，请稍后再试。");
+      }
+
+      return data;
+    }
+
+    function switchView(viewId) {
+      document.querySelectorAll(".view").forEach(view => view.classList.toggle("active", view.id === viewId));
+      document.querySelectorAll(".tab").forEach(tab => tab.classList.toggle("active", tab.dataset.view === viewId));
+      if (viewId === "directoryView" && unlocked) loadRecords();
+    }
+
+    document.querySelectorAll(".tab").forEach(tab => {
+      tab.addEventListener("click", () => switchView(tab.dataset.view));
+    });
+
+    form.addEventListener("submit", async event => {
+      event.preventDefault();
+      const record = Object.fromEntries(fields.map(field => [field, getValue(field)]));
+      record.consent = document.querySelector("#consent").checked;
+      const recordId = getValue("recordId");
+      const submitButton = form.querySelector("button[type='submit']");
+
+      submitButton.disabled = true;
+      formNotice.textContent = "正在保存...";
+
+      try {
+        if (recordId) {
+          await api(`/api/classmates/${encodeURIComponent(recordId)}`, {
+            method: "PUT",
+            body: JSON.stringify(record)
+          });
+          formNotice.textContent = "已更新这位同学的信息。";
+        } else {
+          await api("/api/classmates", {
+            method: "POST",
+            body: JSON.stringify(record)
+          });
+          formNotice.textContent = "已保存，谢谢填写。";
+        }
+
+        form.reset();
+        setValue("recordId", "");
+        if (unlocked) await loadRecords();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } catch (error) {
+        formNotice.textContent = error.message;
+      } finally {
+        submitButton.disabled = false;
+      }
+    });
+
+    document.querySelector("#resetForm").addEventListener("click", () => {
+      form.reset();
+      setValue("recordId", "");
+      formNotice.textContent = "";
+    });
+
+    document.querySelector("#unlockBtn").addEventListener("click", async () => {
+      adminPassword = getValue("adminPasswordInput");
+      try {
+        await loadRecords();
+        unlocked = true;
+        lockBox.hidden = true;
+        directoryBox.hidden = false;
+      } catch (error) {
+        adminPassword = "";
+        alert(error.message);
+      }
+    });
+
+    document.querySelector("#lockBtn").addEventListener("click", () => {
+      unlocked = false;
+      adminPassword = "";
+      records = [];
+      lockBox.hidden = false;
+      directoryBox.hidden = true;
+      setValue("adminPasswordInput", "");
+      render();
+    });
+
+    searchInput.addEventListener("input", renderDirectory);
+    cityFilter.addEventListener("change", renderDirectory);
+
+    document.querySelector("#exportBtn").addEventListener("click", exportCsv);
+    document.querySelector("#exportBtn2").addEventListener("click", exportCsv);
+
+    document.querySelector("#saveSettings").addEventListener("click", () => {
+      settings.title = getValue("titleSetting") || defaultSettings.title;
+      document.querySelector("#settingsNotice").textContent = "线上版标题已在本页面更新。正式修改默认标题请同步修改 public/index.html。";
+      render();
+    });
+
+    document.querySelector("#clearAll").addEventListener("click", () => {
+      document.querySelector("#settingsNotice").textContent = "线上版暂不开放一键清空，避免误删全班数据。可在管理员表格逐条删除。";
+    });
+
+    async function loadRecords() {
+      const data = await api("/api/classmates");
+      records = data.records || [];
+      render();
+    }
+
+    function render() {
+      pageTitle.textContent = settings.title;
+      document.title = settings.title;
+      countPill.textContent = unlocked ? `已收集 ${records.length} 人` : "在线收集版";
+      setValue("titleSetting", settings.title);
+      setValue("passwordSetting", "");
+      renderCityFilter();
+      if (unlocked) renderDirectory();
+    }
+
+    function renderCityFilter() {
+      const selected = cityFilter.value;
+      const cities = [...new Set(records.map(item => item.city).filter(Boolean))].sort((a, b) => a.localeCompare(b, "zh-CN"));
+      cityFilter.innerHTML = `<option value="">全部城市</option>` + cities.map(city => `<option value="${escapeHtml(city)}">${escapeHtml(city)}</option>`).join("");
+      cityFilter.value = cities.includes(selected) ? selected : "";
+    }
+
+    function renderDirectory() {
+      const keyword = searchInput.value.trim().toLowerCase();
+      const city = cityFilter.value;
+      const filtered = records.filter(record => {
+        const text = fields.map(field => record[field] || "").join(" ").toLowerCase();
+        const matchKeyword = !keyword || text.includes(keyword);
+        const matchCity = !city || record.city === city;
+        return matchKeyword && matchCity;
+      });
+
+      directoryBody.innerHTML = filtered.map((record, index) => `
+        <tr>
+          <td>${index + 1}</td>
+          <td>${escapeHtml(record.name)}</td>
+          <td>${escapeHtml(record.phone)}</td>
+          <td>${escapeHtml(record.qq)}</td>
+          <td>${escapeHtml(record.wechat)}</td>
+          <td>${escapeHtml(record.school)}</td>
+          <td>${escapeHtml(record.company)}</td>
+          <td>${escapeHtml(record.city)}</td>
+          <td>${escapeHtml(record.address)}</td>
+          <td>${escapeHtml(record.notes)}</td>
+          <td>${formatDate(record.updated_at)}</td>
+          <td>
+            <button class="btn secondary" type="button" onclick="editRecord('${record.id}')">编辑</button>
+            <button class="btn warning" type="button" onclick="deleteRecord('${record.id}')">删除</button>
+          </td>
+        </tr>
+      `).join("");
+
+      emptyState.hidden = filtered.length > 0;
+    }
+
+    window.editRecord = function editRecord(id) {
+      const record = records.find(item => item.id === id);
+      if (!record) return;
+      fields.forEach(field => setValue(field, record[field]));
+      setValue("recordId", record.id);
+      document.querySelector("#consent").checked = true;
+      formNotice.textContent = "正在编辑已有记录，保存后会覆盖原信息。";
+      switchView("submitView");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+
+    window.deleteRecord = async function deleteRecord(id) {
+      if (!confirm("确定删除这条同学信息吗？")) return;
+      try {
+        await api(`/api/classmates/${encodeURIComponent(id)}`, { method: "DELETE" });
+        await loadRecords();
+      } catch (error) {
+        alert(error.message);
+      }
+    };
+
+    function exportCsv() {
+      if (!records.length) {
+        alert("暂无可导出的数据。");
+        return;
+      }
+
+      const headers = ["序号", "姓名", "手机号码", "QQ号", "微信号", "学校", "工作单位", "所在城市", "家乡/地址", "备注", "更新时间"];
+      const rows = records.map((record, index) => [
+        index + 1,
+        record.name,
+        record.phone,
+        record.qq,
+        record.wechat,
+        record.school,
+        record.company,
+        record.city,
+        record.address,
+        record.notes,
+        formatDate(record.updated_at)
+      ]);
+      const csv = [headers, ...rows].map(row => row.map(csvCell).join(",")).join("\n");
+      const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${settings.title}-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function formatDate(value) {
+      return value ? new Date(value).toLocaleString("zh-CN") : "";
+    }
+
+    function csvCell(value) {
+      const text = String(value ?? "");
+      return `"${text.replaceAll('"', '""')}"`;
+    }
+
+    function escapeHtml(value) {
+      return String(value || "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+      }[char]));
+    }
+
+    render();
+  </script>
+</body>
+</html>
