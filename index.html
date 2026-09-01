@@ -442,6 +442,8 @@
           </div>
           <form id="studentForm">
             <input type="hidden" id="recordId">
+            <input type="hidden" id="originalName">
+            <input type="hidden" id="originalPhone">
             <div class="grid">
               <label>
                 姓名 *
@@ -460,16 +462,16 @@
                 <input id="wechat" placeholder="例如：wxid 或手机号">
               </label>
               <label>
-                学校
-                <input id="school" placeholder="例如：广东石油化工学院">
+                工作领域
+                <input id="school" placeholder="例如：教育、医疗、工程、个体经营">
               </label>
               <label>
                 工作单位
                 <input id="company" placeholder="例如：某某公司">
               </label>
               <label>
-                所在城市
-                <input id="city" placeholder="例如：广州、深圳、佛山">
+                常住地址
+                <input id="city" placeholder="例如：广州天河、深圳南山、良光镇">
               </label>
               <label class="full">
                 家乡 / 地址
@@ -490,6 +492,26 @@
             </div>
             <div class="notice" id="formNotice" role="status"></div>
           </form>
+          <div class="settings" style="border-top: 1px solid var(--line); max-width: none;">
+            <div>
+              <h2>修改已提交信息</h2>
+              <p class="helper">输入原来的姓名和手机号码，找到记录后可直接载入表单修改。</p>
+            </div>
+            <div class="grid">
+              <label>
+                原姓名
+                <input id="lookupName" placeholder="填写时用的姓名">
+              </label>
+              <label>
+                原手机号码
+                <input id="lookupPhone" inputmode="tel" placeholder="填写时用的手机号">
+              </label>
+            </div>
+            <div class="actions">
+              <button class="btn secondary" id="lookupBtn" type="button">载入修改</button>
+            </div>
+            <div class="notice" id="lookupNotice" role="status"></div>
+          </div>
         </div>
       </section>
 
@@ -513,9 +535,9 @@
 
           <div id="directoryBox" hidden>
             <div class="toolbar">
-              <input id="searchInput" placeholder="搜索姓名、手机、城市、学校、单位">
-              <select id="cityFilter" aria-label="按城市筛选">
-                <option value="">全部城市</option>
+              <input id="searchInput" placeholder="搜索姓名、手机、常住地址、工作领域、单位">
+              <select id="cityFilter" aria-label="按常住地址筛选">
+                <option value="">全部常住地址</option>
               </select>
               <button class="btn gold" id="exportBtn" type="button">导出 CSV</button>
               <button class="btn secondary" id="lockBtn" type="button">锁定</button>
@@ -529,9 +551,9 @@
                     <th>手机号码</th>
                     <th>QQ号</th>
                     <th>微信号</th>
-                    <th>学校</th>
+                    <th>工作领域</th>
                     <th>工作单位</th>
-                    <th>所在城市</th>
+                    <th>常住地址</th>
                     <th>家乡 / 地址</th>
                     <th>备注</th>
                     <th>更新时间</th>
@@ -596,6 +618,7 @@
     const countPill = document.querySelector("#countPill");
     const form = document.querySelector("#studentForm");
     const formNotice = document.querySelector("#formNotice");
+    const lookupNotice = document.querySelector("#lookupNotice");
     const directoryBody = document.querySelector("#directoryBody");
     const emptyState = document.querySelector("#emptyState");
     const searchInput = document.querySelector("#searchInput");
@@ -648,6 +671,8 @@
       event.preventDefault();
       const record = Object.fromEntries(fields.map(field => [field, getValue(field)]));
       record.consent = document.querySelector("#consent").checked;
+      record.originalName = getValue("originalName");
+      record.originalPhone = getValue("originalPhone");
       const recordId = getValue("recordId");
       const submitButton = form.querySelector("button[type='submit']");
 
@@ -671,6 +696,8 @@
 
         form.reset();
         setValue("recordId", "");
+        setValue("originalName", "");
+        setValue("originalPhone", "");
         if (unlocked) await loadRecords();
         window.scrollTo({ top: 0, behavior: "smooth" });
       } catch (error) {
@@ -683,7 +710,40 @@
     document.querySelector("#resetForm").addEventListener("click", () => {
       form.reset();
       setValue("recordId", "");
+      setValue("originalName", "");
+      setValue("originalPhone", "");
       formNotice.textContent = "";
+    });
+
+    document.querySelector("#lookupBtn").addEventListener("click", async () => {
+      const button = document.querySelector("#lookupBtn");
+      const identity = {
+        name: getValue("lookupName"),
+        phone: getValue("lookupPhone")
+      };
+
+      button.disabled = true;
+      lookupNotice.textContent = "正在查找...";
+
+      try {
+        const data = await api("/api/classmates?action=lookup", {
+          method: "POST",
+          body: JSON.stringify(identity)
+        });
+        const record = data.record;
+        fields.forEach(field => setValue(field, record[field]));
+        setValue("recordId", record.id);
+        setValue("originalName", record.name);
+        setValue("originalPhone", record.phone);
+        document.querySelector("#consent").checked = true;
+        lookupNotice.textContent = "已载入记录，修改后点上方“保存信息”。";
+        formNotice.textContent = "正在修改已提交记录。保存后会覆盖原信息。";
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } catch (error) {
+        lookupNotice.textContent = error.message;
+      } finally {
+        button.disabled = false;
+      }
     });
 
     document.querySelector("#unlockBtn").addEventListener("click", async () => {
@@ -744,7 +804,7 @@
     function renderCityFilter() {
       const selected = cityFilter.value;
       const cities = [...new Set(records.map(item => item.city).filter(Boolean))].sort((a, b) => a.localeCompare(b, "zh-CN"));
-      cityFilter.innerHTML = `<option value="">全部城市</option>` + cities.map(city => `<option value="${escapeHtml(city)}">${escapeHtml(city)}</option>`).join("");
+      cityFilter.innerHTML = `<option value="">全部常住地址</option>` + cities.map(city => `<option value="${escapeHtml(city)}">${escapeHtml(city)}</option>`).join("");
       cityFilter.value = cities.includes(selected) ? selected : "";
     }
 
@@ -786,6 +846,8 @@
       if (!record) return;
       fields.forEach(field => setValue(field, record[field]));
       setValue("recordId", record.id);
+      setValue("originalName", record.name);
+      setValue("originalPhone", record.phone);
       document.querySelector("#consent").checked = true;
       formNotice.textContent = "正在编辑已有记录，保存后会覆盖原信息。";
       switchView("submitView");
@@ -808,7 +870,7 @@
         return;
       }
 
-      const headers = ["序号", "姓名", "手机号码", "QQ号", "微信号", "学校", "工作单位", "所在城市", "家乡/地址", "备注", "更新时间"];
+      const headers = ["序号", "姓名", "手机号码", "QQ号", "微信号", "工作领域", "工作单位", "常住地址", "家乡/地址", "备注", "更新时间"];
       const rows = records.map((record, index) => [
         index + 1,
         record.name,
