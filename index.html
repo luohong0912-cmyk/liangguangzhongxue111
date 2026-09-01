@@ -636,6 +636,18 @@
 
     const apiBase = "https://liangguangzhongxue111.netlify.app";
 
+    function apiUrl(path) {
+      const recordPath = "/api/classmates/";
+      if (path.startsWith(recordPath)) {
+        const id = path.slice(recordPath.length);
+        return `${apiBase}/.netlify/functions/classmates?id=${id}`;
+      }
+      if (path.startsWith("/api/classmates")) {
+        return `${apiBase}/.netlify/functions/classmates${path.slice("/api/classmates".length)}`;
+      }
+      return `${apiBase}${path}`;
+    }
+
     async function api(path, options = {}) {
       const headers = {
         "Content-Type": "application/json",
@@ -644,7 +656,7 @@
 
       if (adminPassword) headers["x-admin-password"] = adminPassword;
 
-      const response = await fetch(`${apiBase}${path}`, {
+      const response = await fetch(apiUrl(path), {
         ...options,
         headers
       });
